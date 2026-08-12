@@ -1,0 +1,627 @@
+/* =====================================================
+   J.A.R.V.I.S. Sci-Fi HUD — Cyan Portal Execution Theme
+   ===================================================== */
+:root {
+  --bg-deep: #010814;
+  --panel-bg: rgba(2, 18, 38, 0.7);
+  --border-blue: rgba(0, 195, 255, 0.3);
+  --border-bright: #00d8ff;
+
+  --cyan-glow: #00d8ff;
+  --blue-glow: #0077ff;
+  --text-main: #dcf6ff;
+  --text-dim: #508cae;
+
+  --font-hud: 'Orbitron', sans-serif;
+  --font-code: 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--bg-deep);
+  color: var(--text-main);
+  font-family: var(--font-code);
+  overflow: hidden;
+}
+
+/* Background container */
+.hud-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  padding: 20px 40px 24px;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(0, 140, 255, 0.18) 0%, transparent 60%),
+    radial-gradient(circle at 50% 50%, rgba(0, 216, 255, 0.08) 0%, var(--bg-deep) 80%);
+}
+
+/* Neon "sign" style background dots (stars) */
+.star-field {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.star-field .dot {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--cyan-glow);
+  box-shadow: 0 0 6px 1px var(--cyan-glow);
+  animation: dot-twinkle 3.5s ease-in-out infinite;
+}
+
+@keyframes dot-twinkle {
+  0%, 100% { opacity: 0.15; transform: scale(0.8); }
+  50% { opacity: 0.9; transform: scale(1.15); }
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 5, 15, 0.9) 100%);
+  pointer-events: none;
+}
+
+/* Header */
+.hud-header {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-bottom: 12px;
+}
+
+.hud-clock {
+  font-family: var(--font-code);
+  font-size: 14px;
+  color: var(--cyan-glow);
+  letter-spacing: 0.12em;
+  text-shadow: 0 0 8px var(--cyan-glow);
+}
+
+/* Main Stage Layout */
+.main-stage {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding-top: 0;
+  transform: translateY(-25px);
+}
+
+/* 3D Globe Container & HUD Target Rings */
+.core-wrapper {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.globe-canvas-container {
+  width: 100%;
+  height: 100%;
+}
+
+.target-ring {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  transition: opacity 0.5s ease, filter 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.ring-outer {
+  inset: -12px;
+  border: 1px solid rgba(0, 216, 255, 0.22);
+  box-shadow: none;
+  animation: spin-cw 30s linear infinite;
+}
+
+.ring-mid {
+  inset: -2px;
+  border: 1px solid transparent;
+  border-top-color: var(--cyan-glow);
+  border-bottom-color: var(--cyan-glow);
+  opacity: 0.6;
+  animation: spin-ccw 18s linear infinite;
+}
+
+.ring-inner {
+  inset: 15px;
+  border: 1px dotted var(--border-blue);
+  animation: spin-cw 12s linear infinite;
+}
+
+@keyframes spin-cw { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes spin-ccw { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+
+@keyframes neon-pulse {
+  0%, 100% { filter: brightness(0.9); }
+  50% { filter: brightness(1.4); }
+}
+
+/* =====================================================
+   PORTAL / VORTEX RINGS — execution animation
+   (hidden + inert at idle, activated on data-state="busy")
+   ===================================================== */
+/* OUTER PORTAL RINGS — DISABLED */
+.portal-ring {
+  display: none !important;
+}   
+
+
+.portal-burst {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle, rgba(0, 216, 255, 0.55) 0%, rgba(0, 216, 255, 0) 70%);
+  transform: scale(0.6);
+}
+
+@keyframes portal-spin-a {
+  from { transform: rotate(0deg) scale(1); }
+  to   { transform: rotate(360deg) scale(1); }
+}
+
+@keyframes portal-spin-b {
+  from { transform: rotate(0deg) scale(1); }
+  to   { transform: rotate(-360deg) scale(1); }
+}
+
+@keyframes portal-charge {
+  0%, 100% { opacity: 0.35; transform: scale(0.6); }
+  50%      { opacity: 0.85; transform: scale(1.05); }
+}
+
+/* =====================================================
+   EXECUTION STATE — portal activates, sphere energizes
+   NO color/hue change: stays cyan/blue throughout
+   ===================================================== */
+body[data-state="busy"] .ring-outer,
+body[data-state="busy"] .ring-mid,
+body[data-state="busy"] .ring-inner {
+  opacity: 0.25; /* idle wireframe rings fade back */
+}
+
+body[data-state="busy"] .ring-outer {
+  animation: spin-cw 4s linear infinite, neon-pulse 1s ease-in-out infinite;
+}
+
+body[data-state="busy"] .ring-mid {
+  animation: spin-ccw 2.6s linear infinite;
+}
+
+body[data-state="busy"] .portal-ring-a {
+  opacity: 1;
+  transform: scale(1);
+  animation: portal-spin-a 1.6s linear infinite;
+}
+
+body[data-state="busy"] .portal-ring-b {
+  opacity: 1;
+  transform: scale(1);
+  animation: portal-spin-b 1.1s linear infinite;
+}
+
+body[data-state="busy"] .portal-burst {
+  opacity: 1;
+  animation: portal-charge 1.4s ease-in-out infinite;
+}
+
+body[data-state="busy"] .status-title {
+  text-shadow: 0 0 18px rgba(0, 216, 255, 1);
+}
+
+/* Command Section */
+.command-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 580px;
+  gap: 12px;
+}
+
+.status-title {
+  font-family: var(--font-hud);
+  font-size: 17px;
+  letter-spacing: 0.22em;
+  color: var(--cyan-glow);
+  text-shadow: 0 0 12px rgba(0, 216, 255, 0.8);
+  transition: text-shadow 0.4s ease;
+}
+
+.command-form {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background: rgba(1, 16, 36, 0.85);
+  border: 1px solid var(--border-bright);
+  box-shadow: 0 0 18px var(--border-blue);
+  padding: 4px 6px 4px 14px;
+}
+
+.command-form .caret {
+  color: var(--cyan-glow);
+  font-size: 18px;
+  font-weight: bold;
+  margin-right: 10px;
+  text-shadow: 0 0 8px var(--cyan-glow);
+}
+
+.command-form input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-main);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  padding: 8px 0;
+}
+
+.command-form input::placeholder {
+  color: var(--text-dim);
+}
+
+.command-form button {
+  background: var(--border-blue);
+  border: 1px solid var(--border-bright);
+  color: var(--cyan-glow);
+  font-family: var(--font-hud);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.command-form button:hover {
+  background: var(--cyan-glow);
+  color: #000;
+  box-shadow: 0 0 12px var(--cyan-glow);
+}
+
+/* Terminal Log */
+.terminal-log {
+  width: 100%;
+  max-width: 580px;
+  height: 170px;
+  margin-top: 12px;
+  overflow-y: auto;
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  padding-bottom: 10px;
+}
+
+.log-entry {
+  display: flex;
+  gap: 8px;
+}
+.log-entry .tag { color: var(--cyan-glow); }
+
+/* =====================================================================
+   ADDED — CINEMATIC AAA EXECUTION SEQUENCE (JARVIS / Iron Man style)
+   Everything below is NEW. Nothing above was removed or altered in
+   behavior — only .ring-outer/.ring-mid/.ring-inner/.target-ring got
+   an extended `transition` shorthand (filter/box-shadow) so Phase 1
+   can ramp smoothly; their existing animations/rotation are untouched.
+
+   Structure:
+   - PHASE 1 (0-200ms): instant ramp of glow/blur/brightness via
+     transition on the existing ring-outer (no scale).
+   - PHASE 2 (200-700ms) + PHASE 3 (700-1300ms): sustained, looping
+     conic-gradient energy waves, scan sweep, orbiting particles and
+     an electric highlight — built entirely with ::before/::after
+     pseudo-elements on EXISTING elements, so no HTML changes needed.
+     They loop continuously for as long as body[data-state="busy"].
+   - PHASE 4: on state returning to idle, everything fades back via
+     opacity/filter transitions (no shrink/scale).
+
+   All pseudo-elements are opacity:0 / inert at idle and only become
+   visible under body[data-state="busy"], so idle look is 100% unchanged.
+   Color is locked to var(--cyan-glow) throughout — no new hues.
+   ===================================================================== */
+
+/* ---- PHASE 1: instant surge on the existing outer ring ---- */
+body[data-state="busy"] .ring-outer {
+  filter: brightness(1.6) blur(0.3px);
+  box-shadow:
+    0 0 26px 4px var(--cyan-glow),
+    0 0 60px 16px rgba(0, 216, 255, 0.55),
+    inset 0 0 28px rgba(0, 216, 255, 0.35);
+}
+
+/* Give the core wrapper a stacking/clip context for the new pseudo layers */
+.core-wrapper {
+  isolation: isolate;
+}
+
+/* =========================================================
+   PHASE 2 — Rotating conic-gradient "energy wave" layers
+   Built on ring-outer::before / ::after (existing element,
+   no new HTML). Two waves, opposite direction, different speed.
+   ========================================================= */
+.ring-outer::before,
+.ring-outer::after {
+  content: "";
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  padding: 2px;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  transition: opacity 0.45s ease-out 0.2s;
+}
+
+.ring-outer::before {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    var(--cyan-glow) 25deg,
+    transparent 70deg,
+    transparent 180deg,
+    var(--cyan-glow) 205deg,
+    transparent 250deg,
+    transparent 360deg
+  );
+  filter: blur(1.5px) brightness(1.4);
+}
+
+.ring-outer::after {
+  background: conic-gradient(
+    from 90deg,
+    transparent 0deg,
+    rgba(0, 216, 255, 0.9) 15deg,
+    transparent 45deg,
+    transparent 360deg
+  );
+  filter: blur(1px) brightness(1.6);
+}
+
+body[data-state="busy"] .ring-outer::before {
+  opacity: 0.9;
+  animation: energy-wave-cw 2.4s linear infinite;
+}
+
+body[data-state="busy"] .ring-outer::after {
+  opacity: 0.85;
+  animation: energy-wave-ccw 1.5s linear infinite;
+}
+
+@keyframes energy-wave-cw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes energy-wave-ccw {
+  from { transform: rotate(360deg); }
+  to   { transform: rotate(0deg); }
+}
+
+/* =========================================================
+   PHASE 2/3 — Secondary conic layer on ring-mid (existing
+   element) for depth — different speed & direction again.
+   ========================================================= */
+.ring-mid::before,
+.ring-mid::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  padding: 1px;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  transition: opacity 0.45s ease-out 0.35s;
+}
+
+.ring-mid::before {
+  background: conic-gradient(
+    from 45deg,
+    transparent 0deg,
+    var(--cyan-glow) 10deg,
+    transparent 30deg,
+    transparent 120deg,
+    var(--cyan-glow) 132deg,
+    transparent 150deg,
+    transparent 240deg,
+    var(--cyan-glow) 250deg,
+    transparent 270deg,
+    transparent 360deg
+  );
+  filter: blur(1px) brightness(1.5);
+}
+
+body[data-state="busy"] .ring-mid::before {
+  opacity: 0.8;
+  animation: energy-wave-cw 3.2s linear infinite;
+}
+
+/* =========================================================
+   PHASE 3 — Scanning sweep: one bright highlight travels
+   around the circumference. Built on ring-inner (existing
+   element) so no new HTML is required.
+   ========================================================= */
+.ring-inner::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  padding: 2px;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 340deg,
+    #ffffff 355deg,
+    var(--cyan-glow) 360deg
+  );
+  filter: blur(0.5px) brightness(2) drop-shadow(0 0 6px var(--cyan-glow));
+  transition: opacity 0.4s ease-out 0.7s;
+}
+
+body[data-state="busy"] .ring-inner::before {
+  opacity: 1;
+  animation: energy-wave-cw 1.1s linear infinite;
+}
+
+/* =========================================================
+   PHASE 3 — Orbiting light particles, riding the portal
+   rings (existing elements) via ::after layers of small
+   radial-gradient dots rotating around the ring.
+   ========================================================= */
+.portal-ring-a::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(circle 2.4px at 50% 2%, #eaffff 0 95%, transparent 100%),
+    radial-gradient(circle 1.8px at 88% 32%, var(--cyan-glow) 0 95%, transparent 100%),
+    radial-gradient(circle 1.6px at 12% 68%, var(--cyan-glow) 0 95%, transparent 100%);
+  filter: drop-shadow(0 0 4px var(--cyan-glow));
+  transition: opacity 0.4s ease-out 0.75s;
+}
+
+.portal-ring-b::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(circle 1.6px at 70% 6%, #eaffff 0 95%, transparent 100%),
+    radial-gradient(circle 1.4px at 20% 40%, var(--cyan-glow) 0 95%, transparent 100%);
+  filter: drop-shadow(0 0 3px var(--cyan-glow));
+  transition: opacity 0.4s ease-out 0.85s;
+}
+
+body[data-state="busy"] .portal-ring-a::after {
+  opacity: 1;
+  animation: energy-wave-cw 2.1s linear infinite;
+}
+
+body[data-state="busy"] .portal-ring-b::after {
+  opacity: 1;
+  animation: energy-wave-ccw 1.7s linear infinite;
+}
+
+/* =========================================================
+   PHASE 3 — Subtle electric-arc shimmer on the burst layer
+   (existing .portal-burst element). Brightness-only flicker,
+   no color change, no full-screen flash.
+   ========================================================= */
+body[data-state="busy"] .portal-burst {
+  animation: portal-charge 1.4s ease-in-out infinite,
+             arc-shimmer 0.55s ease-in-out infinite alternate;
+}
+
+@keyframes arc-shimmer {
+  from { filter: brightness(1)   blur(0px); }
+  to   { filter: brightness(1.35) blur(0.4px); }
+}
+
+/* =========================================================
+   LISTENING STATE — JARVIS HEARTBEAT
+   Only active while the microphone is listening.
+   Does NOT affect the execution animation.
+   ========================================================= */
+
+body[data-state="listening"] .core-wrapper {
+  animation: jarvis-listening-heartbeat 1.15s ease-in-out infinite;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+
+/* Soft glow while listening */
+
+body[data-state="listening"] .ring-outer {
+  filter: brightness(1.2);
+  box-shadow:
+    0 0 18px 2px rgba(0, 216, 255, 0.45),
+    0 0 38px 8px rgba(0, 216, 255, 0.18);
+}
+
+
+/* Listening title glow */
+
+body[data-state="listening"] .status-title {
+  text-shadow:
+    0 0 12px rgba(0, 216, 255, 0.8),
+    0 0 24px rgba(0, 216, 255, 0.45);
+}
+
+
+/* =========================================================
+   HEARTBEAT
+   Two quick pumps → relax → repeat
+   ========================================================= */
+
+@keyframes jarvis-listening-heartbeat {
+
+  0% {
+    transform: scale(1);
+  }
+
+  12% {
+    transform: scale(1.035);
+  }
+
+  24% {
+    transform: scale(1.075);
+  }
+
+  36% {
+    transform: scale(1.02);
+  }
+
+  48% {
+    transform: scale(1.055);
+  }
+
+  62% {
+    transform: scale(1.015);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}

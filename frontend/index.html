@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>J.A.R.V.I.S. — Sci-Fi HUD Interface</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-state="idle">
+
+  <div class="hud-container">
+    <div class="star-field" id="starField" aria-hidden="true"></div>
+    <div class="vignette" aria-hidden="true"></div>
+
+    <header class="hud-header">
+      <div class="hud-clock" id="hudClock">00:00:00</div>
+    </header>
+
+    <main class="main-stage">
+      <div class="core-wrapper" id="coreWrapper">
+        <!-- Idle state rings (wireframe sphere look) -->
+        <div class="target-ring ring-outer"></div>
+        <div class="target-ring ring-mid"></div>
+        <div class="target-ring ring-inner"></div>
+
+        <!-- Portal / vortex rings — only active during execution -->
+        <div class="portal-ring portal-ring-a"></div>
+        <div class="portal-ring portal-ring-b"></div>
+        <div class="portal-burst"></div>
+
+        <div class="globe-canvas-container" id="globeCanvas"></div>
+      </div>
+
+      <div class="command-section">
+        <h2 class="status-title" id="statusTitle">ENTER YOUR COMMAND</h2>
+
+        <form id="commandForm" class="command-form" autocomplete="off">
+          <span class="caret">&rsaquo;</span>
+          <input type="text" id="commandInput" placeholder="Type command here..." />
+          <button type="submit">TRANSMIT</button>
+        </form>
+      </div>
+
+      <div class="terminal-log" id="terminalLog"></div>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
